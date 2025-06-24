@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Fraud Analysis Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #333;
+        }
+        h1 {
+            color: #4F46E5;
+        }
+        h2 {
+            color: #6B7280;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 4px;
+            margin-top: 24px;
+        }
+        .summary {
+            font-size: 1.1em;
+            margin-bottom: 16px;
+        }
+        .report-section {
+            margin-top: 20px;
+        }
+        pre {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+        img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            margin-top: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            margin-top: 16px;
+        }
+        table, th, td {
+            border: 1px solid #aaa;
+        }
+        th {
+            background-color: #f0f0f0;
+            padding: 8px;
+            text-align: left;
+        }
+        td {
+            padding: 6px;
+            vertical-align: top;
+        }
+        .fraud-row {
+            background-color: #ffecec;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fraud Analysis Report</h1>
+
+    <div class="summary">
+        <strong>File:</strong> {{ filename }}<br>
+        <strong>Total Transactions:</strong> {{ summary.total_transactions }}<br>
+        <strong>Predicted Fraudulent:</strong> {{ summary.predicted_fraud_count }}
+    </div>
+
+    {% if classification_report %}
+        <div class="report-section">
+            <h2>Classification Report</h2>
+            <pre>{{ classification_report }}</pre>
+        </div>
+    {% endif %}
+
+    {% if confusion_matrix_image %}
+        <div class="report-section">
+            <h2>Confusion Matrix</h2>
+            <img src="data:image/png;base64,{{ confusion_matrix_image }}" alt="Confusion Matrix" />
+        </div>
+    {% endif %}
+
+    {% if results %}
+        <div class="report-section">
+            <h2>Detailed Transaction Table</h2>
+            <table>
+                <thead>
+                    <tr>
+                        {% for key in results[0].keys() %}
+                            <th>{{ key.replace('_', ' ') }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                        <tr class="{{ 'fraud-row' if row.final_is_fraud_prediction == 1 }}">
+                            {% for val in row.values() %}
+                                <td>{{ val }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <div class="report-section" style="margin-top: 40px;">
+        <em>Generated on: {{ generation_time }}</em>
+    </div>
+</body>
+</html>
