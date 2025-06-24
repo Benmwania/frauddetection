@@ -2,6 +2,7 @@ import os
 from flask import Flask, request, render_template, jsonify, send_file
 import pandas as pd
 import numpy as np
+from weasyprint import HTML
 from datetime import datetime
 from sklearn.ensemble import IsolationForest
 from sklearn.svm import OneClassSVM
@@ -138,31 +139,25 @@ def upload_form():
 @app.route('/download-pdf', methods=['POST'])
 def download_pdf():
     try:
-        # Extract data from the POST request
         data = request.json
 
-        # Render the HTML using your Jinja2 template
         rendered_html = render_template(
-    'report_template.html',
-    filename=data.get('filename', 'Uploaded File'),
-    summary=data.get('summary', {}),
-    classification_report=data.get('classification_report', ''),
-    confusion_matrix_image=data.get('confusion_matrix_image', ''),
-    generation_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-    results=data.get('results', [])  # ADD THIS LINE
-)
-
-        # Hardcoded path to wkhtmltopdf.exe
-        config = pdfkit.configuration(
-            wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+            'report_template.html',
+            filename=data.get('filename', 'Uploaded File'),
+            summary=data.get('summary', {}),
+            classification_report=data.get('classification_report', ''),
+            confusion_matrix_image=data.get('confusion_matrix_image', ''),
+            generation_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            results=data.get('results', [])
         )
 
-        # Generate PDF
-        pdf = pdfkit.from_string(rendered_html, False, configuration=config)
+        # Generate PDF using WeasyPrint
+        pdf_io = io.BytesIO()
+        HTML(string=rendered_html).write_pdf(pdf_io)
+        pdf_io.seek(0)
 
-        # Return the PDF as a downloadable file
         return send_file(
-            io.BytesIO(pdf),
+            pdf_io,
             mimetype='application/pdf',
             download_name='fraud_analysis_report.pdf',
             as_attachment=True
@@ -171,7 +166,6 @@ def download_pdf():
     except Exception as e:
         app.logger.error(f"Error generating PDF: {str(e)}")
         return {"error": f"Failed to generate PDF: {str(e)}"}, 500
-
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
